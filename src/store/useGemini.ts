@@ -1,8 +1,5 @@
 import { create } from 'zustand';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
-const genAI = new GoogleGenerativeAI(apiKey);
+import { geminiRequest } from '../lib/geminiRequest'; // Adjust path if your lib folder is located elsewhere
 
 interface GeminiState {
   isAnalyzing: boolean;
@@ -29,44 +26,52 @@ export const useGemini = create<GeminiState>((set) => ({
     Provide a highly professional, 2-to-3 sentence urgent action plan to mitigate supply chain disruption at this specific node. 
     Use enterprise logistics terminology (e.g., rerouting, multimodal transport, capacity throttling). Do not use formatting like bolding or asterisks.`;
 
-    // THE TRIPLE-TIER HUNTER: Array of backup models to bypass 429 Quota Limits
-    const fallbackModels = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
-    let finalResponseText = null;
+    try {
+      // Route through the centralized multi-engine architecture
+      const response = await geminiRequest("copilot", prompt);
 
-    for (const modelName of fallbackModels) {
-      try {
-        console.log(`[Neural Engine] Attempting connection via ${modelName}...`);
-        const model = genAI.getGenerativeModel({ model: modelName });
-        const result = await model.generateContent(prompt);
-        finalResponseText = result.response.text();
-        
-        // If we get here, the API succeeded! Break out of the fallback loop.
-        break; 
-      } catch (error) {
-        console.warn(`[Neural Engine] ${modelName} unavailable or rate-limited (429). Hunting next tier...`);
-      }
-    }
-
-    if (finalResponseText) {
-      // API Success across one of the Tiers
-      set({ 
-        analysisResult: finalResponseText, 
-        isAnalyzing: false 
-      });
-    } else {
-      // HACKATHON FAILSAFE: All APIs exhausted (Total Free Tier Lockout)
-      // We dynamically inject the specific node data so it still looks like a real AI response!
-      console.warn("[Neural Engine] All APIs exhausted. Engaging Localized Demo Failsafe...");
-      
-      const nodeName = nodeData.name || "this node";
-      const nodeType = nodeData.type || "infrastructure";
-      
-      setTimeout(() => {
+      if (response.success) {
+        // Pure, live AI response
         set({ 
-          analysisResult: `CRITICAL OVERRIDE: Real-time telemetry processing limits reached. Commencing localized automated protocols for ${nodeName}. Reroute tier-1 cargo immediately and throttle inbound capacity for the ${nodeType} network to prevent localized cascade failure.`, 
+          analysisResult: response.text, 
           isAnalyzing: false 
         });
-      }, 1000); // Slight delay to mimic processing time
+      } else {
+        // STRICT ERROR HANDLING - NO FALLBACK DATA
+        let errorText = "CONNECTION FAILED: Neural Engine offline.";
+        
+        switch (response.errorType) {
+          case "FORBIDDEN": 
+            errorText = "ERROR 403: Copilot API Key is restricted or invalid. Check AI Registry."; 
+            break;
+          case "RATE_LIMITED": 
+            errorText = "ERROR 429: Rate limit exceeded for Copilot engine. Please wait 60 seconds."; 
+            break;
+          case "MISSING_KEY": 
+            errorText = "ERROR: Copilot engine key missing from environment variables."; 
+            break;
+          case "NETWORK_TIMEOUT": 
+            errorText = "ERROR: Network timeout connecting to Gemini matrix."; 
+            break;
+          case "SERVER_ERROR": 
+            errorText = "ERROR 500: Google AI servers are currently experiencing issues."; 
+            break;
+          case "EMPTY_RESPONSE":
+            errorText = "ERROR: AI Engine returned an empty response format.";
+            break;
+        }
+
+        set({ 
+          analysisResult: errorText, 
+          isAnalyzing: false 
+        });
+      }
+    } catch (error) {
+      console.error("[Neural Engine] Critical execution failure:", error);
+      set({ 
+        analysisResult: "CRITICAL ERROR: Failed to execute Copilot analysis sequence.", 
+        isAnalyzing: false 
+      });
     }
   }
 }));

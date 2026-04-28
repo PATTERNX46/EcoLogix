@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, Globe2, Activity, AlertTriangle, 
-  Settings, Search, Menu, X, Bell, User, LogOut, Shield, Route, ScatterChart, LinkIcon, ShieldAlert, Wrench, Siren, Landmark, Code2,ThermometerSnowflake,Leaf,AlertOctagon
+  Settings, Search, Menu, X, Bell, User, LogOut, Shield, Route, ScatterChart, LinkIcon, ShieldAlert, Wrench, Siren, Landmark, Code2,ThermometerSnowflake,Leaf,AlertOctagon,Cpu
 } from "lucide-react";
 import { useAuthStore } from "../../store/useAuthStore";
 import { auth } from "../../config/firebase";
@@ -72,6 +72,7 @@ export default function DashboardLayout() {
     { icon: Landmark, label: "Gov Command", path: "/dashboard/government" },
     { icon: Code2, label: "API Portal", path: "/dashboard/api" },
     { icon: Settings, label: "Settings", path: "/dashboard/settings" },
+    { icon: Cpu, label: "AI Neural Grid", path: "/dashboard/ai-registry" },
     
 
   ];

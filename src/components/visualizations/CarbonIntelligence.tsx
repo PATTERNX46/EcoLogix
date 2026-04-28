@@ -5,7 +5,7 @@ import {
   RefreshCw, AlertTriangle, ArrowRight, Target, ShieldCheck
 } from 'lucide-react';
 
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "PASTE_YOUR_API_KEY_HERE";
+const apiKey = import.meta.env.VITE_GEMINI_CARBON || "PASTE_YOUR_API_KEY_HERE";
 
 interface TransitRoute {
   id: string;

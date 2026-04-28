@@ -5,7 +5,7 @@ import {
   Zap, Play, Activity
 } from 'lucide-react';
 
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "PASTE_YOUR_API_KEY_HERE";
+const apiKey = import.meta.env.VITE_GEMINI_OPTIMIZER || "PASTE_YOUR_API_KEY_HERE";
 
 type OptimizerType = 'quantum' | 'swarm' | 'rl';
 
@@ -76,13 +76,13 @@ export default function OptimizationEngine() {
         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
       };
 
-      // TIER 1: Gemini 2.5 Flash
-      let url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+      // TIER 1: Gemini 3 Flash
+      let url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:generateContent?key=${apiKey}`;
       let response = await fetch(url, fetchConfig);
 
-      // TIER 2: Backup to 1.5 Flash
+      // TIER 2: Backup to 2.5 Flash
       if (!response.ok) {
-        url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
         response = await fetch(url, fetchConfig);
       }
 

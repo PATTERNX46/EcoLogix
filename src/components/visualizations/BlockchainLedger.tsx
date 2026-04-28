@@ -7,7 +7,7 @@ import {
   Box, Cpu
 } from 'lucide-react';
 
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "PASTE_YOUR_API_KEY_HERE";
+const apiKey = import.meta.env.VITE_GEMINI_BLOCKCHAIN || "PASTE_YOUR_API_KEY_HERE";
 
 interface BlockEvent {
   id: string;

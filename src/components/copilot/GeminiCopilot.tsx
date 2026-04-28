@@ -4,8 +4,7 @@ import {
   MessageSquare, X, Send, Mic, Volume2, VolumeX, 
   Sparkles, Loader2, Globe, AlertTriangle, Route, FileText
 } from 'lucide-react';
-
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "PASTE_YOUR_API_KEY_HERE";
+import { geminiRequest } from '../../lib/geminiRequest'; // Adjust path if needed
 
 interface Message {
   id: string;
@@ -97,38 +96,46 @@ export default function GeminiCopilot() {
     setIsTyping(true);
 
     try {
-      // Build conversational history for Gemini
-      const contents = messages.map(msg => ({
-        role: msg.role,
-        parts: [{ text: msg.text }]
-      }));
+      // Build a comprehensive prompt string including history for context
+      const historyContext = messages
+        .filter(msg => msg.id !== '1') // Skip the generic greeting
+        .map(msg => `${msg.role === 'user' ? 'Operator' : 'Copilot'}: ${msg.text}`)
+        .join('\n');
+
+      const fullPrompt = `Context: You are the Resilio.OS Supply Chain Copilot. Be concise, professional, and highly technical. ${language.promptExt}
       
-      // Append the new message with context and language instructions
-      contents.push({
-        role: 'user',
-        parts: [{ 
-          text: `Context: You are the Resilio.OS Supply Chain Copilot. Be concise, professional, and highly technical. ${language.promptExt}\n\nUser Query: ${text}` 
-        }]
-      });
+      Conversation History:
+      ${historyContext}
+      
+      Operator: ${text}
+      Copilot:`;
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents })
-      });
+      // Call the Centralized Registry!
+      const response = await geminiRequest("copilot", fullPrompt);
 
-      if (!response.ok) throw new Error("API Connection Failed");
+      if (response.success) {
+        const modelMsg: Message = { id: (Date.now() + 1).toString(), role: 'model', text: response.text };
+        setMessages(prev => [...prev, modelMsg]);
+        speakText(response.text);
+      } else {
+        // STRICT ERROR HANDLING - NO FALLBACK DATA
+        let errorText = "Neural link disrupted. System error.";
+        
+        switch(response.errorType) {
+            case "FORBIDDEN": errorText = "ERROR 403: API Key is restricted or invalid. Please check the AI Registry."; break;
+            case "RATE_LIMITED": errorText = "ERROR 429: Rate limit exceeded. Please wait 60 seconds before issuing new commands."; break;
+            case "MISSING_KEY": errorText = "ERROR: Copilot engine key missing from environment variables."; break;
+            case "NETWORK_TIMEOUT": errorText = "ERROR: Network timeout connecting to Gemini matrix."; break;
+            case "SERVER_ERROR": errorText = "ERROR 500: Google AI servers are currently experiencing issues."; break;
+        }
 
-      const data = await response.json();
-      const replyText = data.candidates[0].content.parts[0].text;
-
-      const modelMsg: Message = { id: (Date.now() + 1).toString(), role: 'model', text: replyText };
-      setMessages(prev => [...prev, modelMsg]);
-      speakText(replyText);
+        const errorMsg: Message = { id: Date.now().toString(), role: 'model', text: errorText };
+        setMessages(prev => [...prev, errorMsg]);
+      }
 
     } catch (error) {
       console.error(error);
-      const errorMsg: Message = { id: Date.now().toString(), role: 'model', text: "Network interference detected. API rate limit may be active. Please try again." };
+      const errorMsg: Message = { id: Date.now().toString(), role: 'model', text: "Critical system error executing request." };
       setMessages(prev => [...prev, errorMsg]);
     } finally {
       setIsTyping(false);
@@ -195,7 +202,7 @@ export default function GeminiCopilot() {
                     {msg.text}
                   </div>
                   <span className="text-[8px] text-gray-500 font-bold uppercase tracking-widest mt-1 px-1">
-                    {msg.role === 'user' ? 'Operator' : 'Gemini 2.5'}
+                    {msg.role === 'user' ? 'Operator' : 'Gemini AI'}
                   </span>
                 </div>
               ))}
@@ -257,7 +264,7 @@ export default function GeminiCopilot() {
                       handleSend(input);
                     }
                   }}
-                  placeholder="Ask Gemini to analyze network..."
+                  placeholder="Ask Copilot to analyze network..."
                   className="flex-1 bg-[#111113] border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors resize-none max-h-32 custom-scrollbar"
                   rows={1}
                   style={{ minHeight: '44px' }}
@@ -286,7 +293,7 @@ export default function GeminiCopilot() {
   );
 }
 
-// Temporary Icon definitions for the quick prompts to avoid massive imports
+// Temporary Icon definition
 function Clock(props: any) {
   return <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>;
 }

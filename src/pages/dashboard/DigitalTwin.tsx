@@ -7,7 +7,7 @@ import {
   RefreshCw, AlertTriangle, Box, Thermometer, Zap, Layers, Cpu, ServerCrash, Radar
 } from 'lucide-react';
 
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "PASTE_YOUR_API_KEY_HERE";
+const apiKey = import.meta.env.VITE_GEMINI_TWIN || "PASTE_YOUR_API_KEY_HERE";
 
 // ==========================================
 // 1. GLOBAL NETWORK DATA
